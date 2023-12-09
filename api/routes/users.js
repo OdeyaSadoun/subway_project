@@ -1,139 +1,19 @@
 const express = require("express");
-const bcrypt = require("bcrypt");
-const { UserModel, createToken } = require("../models/users.model");
-const {
-  userSchemaValidate,
-  userLoginValidate,
-} = require("../validations/users.validation");
 const { auth, authAdmin } = require("../middleware/auth");
+const { userlCtrl } = require("../controllers/users.controllers");
+const { authCtrl } = require("../controllers/auth.controllers");
 const router = express.Router();
 
-router.get("/", async (req, res) => {
-  res.json({ msg: "Users work" });
-});
+router.get("/myInfo", auth, userlCtrl.getUserInfo);
 
-router.get("/myInfo", auth, async (req, res) => {
-  try {
-    let userInfo = await UserModel.findOne(
-      { _id: req.tokenData._id },
-      { password: 0 }
-    );
-    res.json(userInfo);
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ msg: "err", err });
-  }
-});
+router.get("/usersList", authAdmin, userlCtrl.getAllUsers);
 
-router.get("/usersList", authAdmin, async (req, res) => {
-  try {
-    let data = await UserModel.find({}, { password: 0 });
-    res.json(data);
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ msg: "err", err });
-  }
-});
+router.post("/", authCtrl.register);
 
-router.post("/", async (req, res) => {
-  let validBody = userSchemaValidate(req.body);
-  if (validBody.error) {
-    return res.status(400).json(validBody.error.details);
-  }
-  try {
-    let user = new UserModel(req.body);
-    user.password = await bcrypt.hash(user.password, 10);
-    await user.save();
-    user.password = "********";
-    res.status(201).json(user);
-  } catch (err) {
-    if (err.code == 11000) {
-      return res
-        .status(500)
-        .json({ msg: "Email already in system, try log in", code: 11000 });
-    }
-    console.log(err);
-    res.status(500).json({ msg: "err", err });
-  }
-});
+router.post("/login", authCtrl.login);
 
-router.post("/login", async (req, res) => {
-  let validBody = userLoginValidate(req.body);
-  if (validBody.error) {
-    return res.status(400).json(validBody.error.details);
-  }
-  try {
-    let user = await UserModel.findOne({ email: req.body.email });
-    if (!user) {
-      return res
-        .status(401)
-        .json({ msg: "Password or email is worng ,code:1" });
-    }
-    let authPassword = await bcrypt.compare(req.body.password, user.password);
-    if (!authPassword) {
-      return res
-        .status(401)
-        .json({ msg: "Password or email is worng ,code:2" });
-    }
-    let token = createToken(user._id, user.role);
-    res.json({ token });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ msg: "err", err });
-  }
-});
+router.put("/:idEdit", auth, userlCtrl.editUser);
 
-router.put("/:idEdit", auth, async (req, res) => {
-  let idEdit = req.params.idEdit;
-  let validBody = userSchemaValidate(req.body);
-  if (validBody.error) {
-    return res.status(400).json(validBody.error.details);
-  }
-  try{
-
-    console.log(req.tokenData);
-    let data;
-    if (req.tokenData.role == "admin") {
-      req.body.password = await bcrypt.hash(req.body.password, 10)
-      data = await UserModel.updateOne({ _id: idEdit }, req.body);
-    }
-    else if (idEdit == req.tokenData._id) {
-      req.body.password = await bcrypt.hash(req.body.password, 10)
-      data = await UserModel.updateOne({ _id: idEdit }, req.body);
-    }
-    else {
-      data = [{ status: "failed", msg: "You are trying to do an operation that is not enabled!" }]
-    }
-    res.json(data);
-
-  }
-  catch (err) {
-    console.log(err);
-    res.status(500).json({ err })
-  }
-});
-
-router.delete("/:idDelete", auth, async (req, res) => {
-  console.log("delete");
-  let idDelete = req.params.idDelete;
-  try{
-    let data;
-    if (req.tokenData.role == "admin") {
-      data = await UserModel.deleteOne({ _id: idDelete });
-    }
-    else if (idDelete == req.tokenData._id) {
-      data = await UserModel.deleteOne({ _id: idDelete });
-    }
-    else {
-      data = [{ status: "failed", msg: "You are trying to do an operation that is not enabled!" }]
-    }
-    res.json(data);
-
-  }
-  catch (err) {
-    console.log(err);
-    res.status(500).json({ err })
-  }
-});
+router.delete("/:idDelete", auth, userlCtrl.deleteUser);
 
 module.exports = router;
