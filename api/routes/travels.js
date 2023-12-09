@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const { auth, authAdmin } = require("../middleware/auth");
-const { TravelModel } = require("../models/travelsModel");
-const { travelSchemaValidate } = require("../validations/travelsValidate");
+const { TravelModel } = require("../models/travels.model");
+const { travelSchemaValidate } = require("../validations/travels.validation");
 
 router.get("/", (req, res) => {
   res.json({ msg: "travels work project 3" });

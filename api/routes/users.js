@@ -1,10 +1,10 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
-const { UserModel, createToken } = require("../models/usersModel");
+const { UserModel, createToken } = require("../models/users.model");
 const {
   userSchemaValidate,
   userLoginValidate,
-} = require("../validations/usersValidate");
+} = require("../validations/users.validation");
 const { auth, authAdmin } = require("../middleware/auth");
 const router = express.Router();
 
