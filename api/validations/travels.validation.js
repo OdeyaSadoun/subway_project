@@ -1,7 +1,7 @@
 const Joi = require("joi");
 
-exports.travelSchemaValidate = (_reqBody) => {
-  let travelValidate = Joi.object({
+exports.travelValidate = (_reqBody) => {
+  let validate = Joi.object({
     train_name: Joi.string().max(3).required(),
     ticket: {
       payment_type: Joi.string().max(50).required(),
@@ -9,5 +9,5 @@ exports.travelSchemaValidate = (_reqBody) => {
     }
   });
 
-  return travelValidate.validate(_reqBody);
+  return validate.validate(_reqBody);
 };
